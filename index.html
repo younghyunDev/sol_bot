@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Cache-Control Meta Tags -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-
     <title>SUPER SOL - 프로토타입</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS Custom Config -->
@@ -34,6 +29,7 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             overscroll-behavior-y: contain; 
+            overflow-x: hidden;
         }
         .page {
             display: none;
@@ -161,7 +157,7 @@
         }
     </style>
 </head>
-<body class="bg-white overflow-hidden"> 
+<body class="bg-white overflow-x-hidden"> 
 
     <div id="loading-indicator" class="loading-overlay" style="display: none;">
         <div class="loader"></div>
@@ -577,9 +573,15 @@
             const bubbleDiv = document.createElement('div');
             bubbleDiv.className = `p-3 rounded-lg shadow chat-bubble ${bubbleClass}`;
             
-            if (sender === 'AI' && typeof marked !== 'undefined' && text) { bubbleDiv.innerHTML = marked.parse(text); } 
-            else if (text) { bubbleDiv.innerHTML = text; } // Allow HTML from system messages
-            else { bubbleDiv.textContent = ""; }
+            if (text.includes('<') && text.includes('>')) {
+                bubbleDiv.innerHTML = text; // Allow pre-formatted HTML
+            } else if (sender === 'AI' && typeof marked !== 'undefined' && text) { 
+                bubbleDiv.innerHTML = marked.parse(text); 
+            } else if (text) { 
+                bubbleDiv.innerHTML = escapeHTML(text).replace(/\n/g, '<br>'); 
+            } else { 
+                bubbleDiv.textContent = ""; 
+            }
             
             messageDiv.appendChild(bubbleDiv);
             messagesArea.appendChild(messageDiv);
