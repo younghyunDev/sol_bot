@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cache-Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <title>SUPER SOL - 프로토타입</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
-    <!-- Font Awesome CDN (corrected integrity attribute) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- marked.js CDN for Markdown to HTML conversion -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            overscroll-behavior-y: contain; 
-        }
+    <!-- Tailwind CSS Custom Config -->
+    <script>
         tailwind.config = {
             theme: {
                 extend: {
@@ -28,23 +25,31 @@
                 }
             }
         }
+    </script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- marked.js CDN for Markdown to HTML conversion -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            overscroll-behavior-y: contain; 
+        }
         .page {
             display: none;
             animation: fadeIn 0.3s ease-in-out;
             width: 100%;
             background-color: white; 
-            height: 100vh; /* Ensure pages take full viewport height */
-            flex-direction: column; /* Default to column for page content */
+            height: 100vh; 
+            flex-direction: column; 
         }
         .page.active {
             display: flex; 
         }
-        /* page-main and page-chat need space for bottom nav */
-        #page-main.active, #page-chat.active {
-            height: calc(100vh - 4rem); /* Adjust height considering bottom nav */
+        /* All pages now have full height and manage their own scroll */
+        #page-main, #page-chat, #page-transfer, #page-balance {
             overflow-y: auto;
         }
-
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -56,7 +61,6 @@
         }
         .cover-gradient {
             background: linear-gradient(to bottom right, #004098, #005cb9);
-            /* min-height: 100vh; */
             position: absolute; top:0; left:0; 
         }
         .search-bar-shadow {
@@ -64,7 +68,7 @@
         }
         .chat-bubble {
             animation: slideUp 0.3s ease-out;
-            max-width: 80%; 
+            max-width: 85%; 
         }
         .chat-bubble-user {
             background-color: #0072CE; 
@@ -79,6 +83,7 @@
             border-collapse: collapse;
             margin-top: 0.5rem;
             margin-bottom: 0.5rem;
+            background-color: white;
         }
         .chat-bubble-bot th, .chat-bubble-bot td {
             border: 1px solid #cccccc;
@@ -88,7 +93,7 @@
         .chat-bubble-bot th {
             background-color: #f0f0f0;
         }
-
+        
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -134,23 +139,26 @@
         .quick-reply-button:hover {
             background-color: #005cb9;
         }
-        #page-main {
-            padding-bottom: 1rem; 
+        #transfer-quick-reply-area select {
+            width: 100%;
+            max-width: 280px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 8px;
+            color: black;
+            font-size: 0.875rem;
         }
-        #transfer-chat-messages {
-            min-height: 450px; 
-        }
-        #chat-messages-container { /* For SOLbot chat */
+        #chat-messages-container { 
              flex-grow: 1;
              overflow-y: auto;
              padding: 1rem;
         }
-        #solbot-input-container { /* For SOLbot chat */
+        #solbot-input-container { 
             background-color: white;
             padding: 0.75rem;
-            border-top: 1px solid #e5e7eb; /* Tailwind gray-200 */
+            border-top: 1px solid #e5e7eb;
         }
-
     </style>
 </head>
 <body class="bg-white overflow-hidden"> 
@@ -163,7 +171,7 @@
     <div id="app-container" class="relative w-full max-w-md mx-auto h-screen overflow-hidden border border-gray-300 rounded-lg shadow-xl">
 
         <!-- Page 1: Cover -->
-        <div id="page-cover" class="page active cover-gradient items-center justify-center p-8 text-white text-center">
+        <div id="page-cover" class="page active items-center justify-center p-8 text-white text-center cover-gradient">
             <div class="text-5xl font-bold mb-4">
                 <i class="fas fa-bolt-lightning"></i> SOL
             </div>
@@ -171,41 +179,39 @@
             <p class="text-lg mb-8">"말하면 다 되는 똑똑한 금융 생활"</p>
             <div class="w-full max-w-sm mt-8">
                 <div class="relative flex items-center bg-white border-2 border-shinhan-blue rounded-full h-16 search-bar-shadow">
-                    <input type="text" id="cover-search-input" placeholder="무엇을 도와드릴까요?" class="w-full h-full pl-6 pr-28 rounded-full text-lg placeholder-gray-400 focus:outline-none text-black" onkeypress="handleCoverSearch(event)">
-                    <button onclick="handleCoverSearch(null, false, true)" class="absolute right-16 top-1/2 transform -translate-y-1/2 text-shinhan-blue hover:text-shinhan-dark-blue transition-colors p-2">
+                    <input type="text" id="cover-search-input" placeholder="무엇을 도와드릴까요?" class="w-full h-full pl-6 pr-28 rounded-full text-lg placeholder-gray-400 focus:outline-none text-black" onkeypress="handleSearch(event, 'cover-search-input')">
+                    <button onclick="handleSearch(null, 'cover-search-input', true)" class="absolute right-16 top-1/2 transform -translate-y-1/2 text-shinhan-blue hover:text-shinhan-dark-blue transition-colors p-2 z-10">
                         <i class="fas fa-arrow-right text-xl"></i> 
                     </button>
-                    <button onclick="handleCoverSearch(null, true, false)" class="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center text-shinhan-blue hover:text-shinhan-dark-blue transition-colors">
+                    <button onclick="startSpeechRecognition('cover-search-input')" class="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center text-shinhan-blue hover:text-shinhan-dark-blue transition-colors z-10">
                         <i class="fas fa-microphone text-xl"></i>
                         <span class="text-xs mt-0.5">말하기</span>
                     </button>
                 </div>
             </div>
-            <p class="mt-4 text-sm text-gray-200">예: "송금", "계좌 조회"</p>
+            <p class="mt-4 text-sm text-gray-200">예: "김신한에게 5만원 보내줘", "오늘의 환율 알려줘"</p>
              <button onclick="showPage('page-main')" class="mt-8 text-gray-300 hover:text-white underline">
-                또는, 둘러보기
+                홈으로 바로가기
             </button>
         </div>
 
         <!-- Page 2: Main UI -->
         <div id="page-main" class="page bg-white no-scrollbar"> 
-            <!-- 검색바 (Main) -->
-            <div class="p-4 sticky top-0 bg-white z-10">
+            <div class="p-4 sticky top-0 bg-white z-10 border-b">
                  <div class="relative flex items-center bg-white border-2 border-shinhan-blue rounded-full h-16 search-bar-shadow">
-                    <input type="text" id="main-search-input" placeholder="무엇을 도와드릴까요?" class="w-full h-full pl-6 pr-28 rounded-full text-lg placeholder-gray-400 focus:outline-none text-black" onkeypress="handleMainSearch(event)">
-                     <button onclick="handleMainSearch(null, false, true)" class="absolute right-16 top-1/2 transform -translate-y-1/2 text-shinhan-blue hover:text-shinhan-dark-blue transition-colors p-2">
+                    <input type="text" id="main-search-input" placeholder="무엇을 도와드릴까요?" class="w-full h-full pl-6 pr-28 rounded-full text-lg placeholder-gray-400 focus:outline-none text-black" onkeypress="handleSearch(event, 'main-search-input')">
+                     <button onclick="handleSearch(null, 'main-search-input', true)" class="absolute right-16 top-1/2 transform -translate-y-1/2 text-shinhan-blue hover:text-shinhan-dark-blue transition-colors p-2 z-10">
                         <i class="fas fa-arrow-right text-xl"></i> 
                     </button>
-                    <button onclick="handleMainSearch(null, true, false)" class="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center text-shinhan-blue hover:text-shinhan-dark-blue transition-colors">
+                    <button onclick="startSpeechRecognition('main-search-input')" class="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center text-shinhan-blue hover:text-shinhan-dark-blue transition-colors z-10">
                         <i class="fas fa-microphone text-xl"></i>
                         <span class="text-xs mt-0.5">말하기</span>
                     </button>
                 </div>
             </div>
-            <!-- 추천 서비스 (Main) -->
             <div class="p-4 space-y-3">
                 <h2 class="text-lg font-semibold text-shinhan-dark-gray mb-3 px-2">추천 서비스</h2>
-                <div onclick="showService('잔액조회')" class="bg-gray-100 hover:bg-gray-200 p-4 rounded-xl shadow flex justify-between items-center cursor-pointer transition-all">
+                <div onclick="showPage('page-balance')" class="bg-gray-100 hover:bg-gray-200 p-4 rounded-xl shadow flex justify-between items-center cursor-pointer transition-all">
                     <span class="text-shinhan-dark-gray text-md">💰 잔액조회</span>
                     <i class="fas fa-chevron-right text-gray-400"></i>
                 </div>
@@ -213,12 +219,8 @@
                     <span class="text-shinhan-dark-gray text-md">💸 송금</span>
                     <i class="fas fa-chevron-right text-gray-400"></i>
                 </div>
-                <div onclick="showService('투자 추천')" class="bg-gray-100 hover:bg-gray-200 p-4 rounded-xl shadow flex justify-between items-center cursor-pointer transition-all">
+                <div onclick="goToSolBotWithQuery('신한은행 투자 상품 추천해줘')" class="bg-gray-100 hover:bg-gray-200 p-4 rounded-xl shadow flex justify-between items-center cursor-pointer transition-all">
                     <span class="text-shinhan-dark-gray text-md">📈 투자 추천</span>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
-                </div>
-                <div onclick="showService('환율 정보')" class="bg-gray-100 hover:bg-gray-200 p-4 rounded-xl shadow flex justify-between items-center cursor-pointer transition-all">
-                    <span class="text-shinhan-dark-gray text-md">🌍 환율 정보</span>
                     <i class="fas fa-chevron-right text-gray-400"></i>
                 </div>
                 <div onclick="getFinancialTip()" class="bg-shinhan-light-blue hover:bg-blue-200 p-4 rounded-xl shadow flex justify-between items-center cursor-pointer transition-all mt-4">
@@ -226,29 +228,27 @@
                     <i class="fas fa-lightbulb text-shinhan-blue"></i>
                 </div>
             </div>
-            <!-- SOLbot section removed from here -->
-             <div class="h-16"></div> 
+             <div class="text-center mt-8">
+                 <button onclick="showPage('page-chat')" class="inline-flex items-center justify-center bg-shinhan-blue text-white font-bold py-3 px-8 rounded-full transition-colors duration-300 shadow-lg">
+                    <i class="fas fa-robot mr-2"></i><span>SOL봇과 대화하기</span>
+                </button>
+             </div>
         </div>
-
-
-        <!-- Page 3: Search Results -->
-        <div id="page-search-results" class="page bg-white"> 
-             <div class="w-full h-full bg-white z-20 flex flex-col"> 
-                <div class="p-4 sticky top-0 bg-white z-10 border-b">
-                    <button onclick="showPage('page-main');" class="text-shinhan-blue absolute top-1/2 left-4 transform -translate-y-1/2">
-                        <i class="fas fa-arrow-left text-xl"></i>
-                    </button>
-                    <h2 class="text-xl font-semibold text-shinhan-dark-gray text-center py-3">검색 결과</h2>
-                </div>
-                <div class="p-4 flex-grow overflow-y-auto no-scrollbar">
-                    <p class="text-sm text-center text-shinhan-blue mb-4">✨ AI가 추천하는 결과입니다 ✨</p>
-                    <div class="space-y-3" id="search-results-content">
-                    </div>
-                </div>
+        
+        <!-- Page 3: Balance Inquiry -->
+        <div id="page-balance" class="page bg-shinhan-gray">
+            <div class="bg-white p-3 flex items-center sticky top-0 z-10 border-b shadow-sm flex-shrink-0">
+                <button onclick="showPage('page-main')" class="text-shinhan-blue mr-3">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-xl font-semibold text-shinhan-dark-gray">계좌 잔액 조회</h2>
+            </div>
+            <div id="balance-list-container" class="p-4 space-y-4">
+                <!-- Balance list will be rendered here -->
             </div>
         </div>
 
-        <!-- Page 4: SOLbot Chat (Restored as a separate page) -->
+        <!-- Page 4: SOLbot Chat -->
         <div id="page-chat" class="page bg-gray-100">
             <div class="bg-white p-3 flex items-center sticky top-0 z-10 border-b shadow-sm flex-shrink-0">
                 <button onclick="showPage('page-main')" class="text-shinhan-blue mr-3">
@@ -261,13 +261,12 @@
             </div>
             <div id="chat-messages-container" class="no-scrollbar">
                 <div id="chat-messages" class="p-4 space-y-4"> 
-                    <!-- Initial SOLbot welcome message will be added by JS -->
                 </div>
             </div>
             <div id="solbot-input-container" class="flex-shrink-0"> 
                 <div class="flex items-center bg-gray-100 rounded-full p-1">
                     <input type="text" id="chat-input" placeholder="메시지를 입력하거나 말해주세요" class="flex-grow bg-transparent p-3 focus:outline-none text-shinhan-dark-gray placeholder-gray-500" onkeypress="handleChatInput(event)">
-                    <button onclick="sendChatMessage(null, true)" class="text-shinhan-blue p-3 rounded-full hover:bg-gray-200 transition-colors">
+                    <button onclick="startSpeechRecognition('chat-input')" class="text-shinhan-blue p-3 rounded-full hover:bg-gray-200 transition-colors">
                         <i class="fas fa-microphone text-xl"></i>
                     </button>
                      <button onclick="sendChatMessage(document.getElementById('chat-input').value, false)" class="text-shinhan-blue p-3 rounded-full hover:bg-gray-200 transition-colors ml-1">
@@ -291,16 +290,19 @@
                     <h2 class="text-xl font-semibold text-shinhan-dark-gray">송금하기</h2>
                 </div>
                 <div id="transfer-chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto no-scrollbar">
-                    {/* 송금 챗봇 메시지 */}
                 </div>
                  <div id="transfer-summary-display" class="p-4 bg-white border-t flex-shrink-0" style="display:none;">
-                    <h3 class="text-md font-semibold text-shinhan-dark-gray mb-2 text-center">✨ AI 이체내역 요약 ✨</h3>
+                    <h3 class="text-md font-semibold text-shinhan-dark-gray mb-2 text-center">✨ 이체 결과 ✨</h3>
                     <div id="ai-transfer-summary-text" class="bg-shinhan-light-blue text-shinhan-dark-gray p-3 rounded-lg shadow text-sm mb-3 text-left">
-                        {/* AI 요약 내용이 여기에 표시됨 */}
                     </div>
-                    <button onclick="resetAndGoBackFromTransfer()" class="w-full bg-shinhan-blue hover:bg-shinhan-dark-blue text-white font-bold py-2.5 px-4 rounded-lg transition-colors duration-300">
-                        확인
-                    </button>
+                    <div class="flex space-x-2 mt-4">
+                        <button onclick="startTransferChat(true)" class="w-1/2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2.5 px-4 rounded-lg transition-colors duration-300">
+                           새로운 송금
+                        </button>
+                        <button onclick="goToSolBotFromTransfer()" class="w-1/2 bg-shinhan-blue hover:bg-shinhan-dark-blue text-white font-bold py-2.5 px-4 rounded-lg transition-colors duration-300">
+                           SOL봇과 대화하기
+                        </button>
+                    </div>
                 </div>
                 <div id="transfer-input-area" class="bg-white p-3 border-t flex-shrink-0"> 
                     <div class="flex items-center bg-gray-100 rounded-full p-1">
@@ -309,29 +311,12 @@
                             <i class="fas fa-paper-plane text-xl"></i>
                         </button>
                     </div>
-                     <div id="transfer-quick-reply-area" class="flex flex-wrap justify-center mt-2">
-                        {/* 빠른 응답 버튼 */}
+                     <div id="transfer-quick-reply-area" class="flex flex-col items-center mt-2">
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- 하단 고정 네비게이션 -->
-        <div id="bottom-navigation" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 p-2 flex justify-around items-center h-16 z-30">
-             <button onclick="showPage('page-cover')" class="text-gray-500 hover:text-shinhan-blue flex flex-col items-center">
-                <i class="fas fa-sign-out-alt text-xl"></i> <span class="text-xs">첫화면</span>
-            </button>
-            <button onclick="showPage('page-main')" class="text-gray-500 hover:text-shinhan-blue flex flex-col items-center" id="nav-home-button">
-                <i class="fas fa-home text-xl"></i> <span class="text-xs">홈</span>
-            </button>
-            <button onclick="showPage('page-chat')" class="text-gray-500 hover:text-shinhan-blue flex flex-col items-center" id="nav-solbot-button">
-                <i class="fas fa-robot text-xl"></i> <span class="text-xs">SOL봇</span>
-            </button>
-            <button onclick="showToast('전체메뉴는 준비 중입니다.')" class="text-gray-500 hover:text-shinhan-blue flex flex-col items-center">
-                <i class="fas fa-bars text-xl"></i> <span class="text-xs">전체메뉴</span>
-            </button>
-        </div>
-
     </div>
 
     <div id="toast-message" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50">
@@ -340,24 +325,32 @@
 
     <script>
         let currentPage = 'page-cover';
-        let previousPageForTransfer = 'page-main'; // Default to main if transfer initiated weirdly
-        let initialSolbotQuery = null; // To pass initial query from main search to SOLbot
+        let previousPageForTransfer = 'page-main';
+        let initialSolbotQuery = null;
+        let initialTransferData = null;
         
-        const GEMINI_API_KEY = "AIzaSyDfghlU_a0nTRFDOdDYampJl8XQdXh4_zQ"; 
+        const GEMINI_API_KEY = "AIzaSyCPgXe1ZIxIa6aJp_l9Jxn5dnO8XhUcOig"; 
         const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
         let currentTransferStep = ''; 
-        let transferData = { recipient: '', amount: '', account: '' };
         const availableAccounts = [ 
-            { name: "신한 주거래 우대통장", number: "110-***-123456" },
-            { name: "쏠편한 입출금통장", number: "123-***-789012" },
-            { name: "MY 급여통장", number: "456-***-789000" }
+            { name: "신한 주거래 우대통장", number: "110-***-123456", balance: 2500000 },
+            { name: "쏠편한 입출금통장", number: "123-***-789012", balance: 150000 }
         ];
+        let transferData = { 
+            recipient: '', 
+            amount: '', 
+            account: availableAccounts[0].name, 
+        };
 
-        async function callGeminiAPI(prompt, forChat = false) {
+        const SHINHAN_BOT_PERSONA = "당신은 신한은행의 AI 금융 비서 'SOL봇'입니다. 모든 답변은 신한은행의 입장에서 금융과 관련된 내용으로, 친절하고 전문적으로 답변해야 합니다. ";
+
+        async function callGeminiAPI(prompt) {
             const loadingIndicator = document.getElementById('loading-indicator');
             if (loadingIndicator) loadingIndicator.style.display = 'flex';
-            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            
+            const fullPrompt = SHINHAN_BOT_PERSONA + prompt;
+            let chatHistory = [{ role: "user", parts: [{ text: fullPrompt }] }];
             const payload = { contents: chatHistory };
 
             try {
@@ -369,213 +362,211 @@
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error("Gemini API Error:", errorData);
-                    if (forChat) { 
-                         throw new Error(`API 요청 실패: ${response.status}`);
-                    }
-                    return null; 
+                    return "죄송해요, 지금은 답변을 드리기 어렵네요.";
                 }
                 const result = await response.json();
                 if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                     return result.candidates[0].content.parts[0].text;
                 } else {
                     console.error("Gemini API 응답 형식 오류:", result);
-                    if (forChat) return "죄송해요, 지금은 답변을 드리기 어렵네요.";
-                    return null; 
+                    return "죄송해요, 지금은 답변을 드리기 어렵네요.";
                 }
             } catch (error) {
                 console.error('Gemini API 호출 중 오류 발생:', error);
-                 if (forChat) showToast(`오류: ${error.message.substring(0,100)}`); 
-                return forChat ? "죄송해요, 네트워크 오류가 발생했어요." : null; 
+                showToast(`오류: ${error.message.substring(0,100)}`); 
+                return "죄송해요, 네트워크 오류가 발생했어요.";
             } finally {
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
-            }
-        }
-
-        function updateActiveNavButton() {
-            const homeButton = document.getElementById('nav-home-button');
-            const solbotButton = document.getElementById('nav-solbot-button');
-            
-            [homeButton, solbotButton].forEach(btn => {
-                if(btn) {
-                    btn.classList.remove('text-shinhan-blue', 'font-semibold');
-                    btn.classList.add('text-gray-500');
-                }
-            });
-
-            if (currentPage === 'page-main' ) {
-                 if(homeButton) {
-                    homeButton.classList.add('text-shinhan-blue', 'font-semibold');
-                    homeButton.classList.remove('text-gray-500');
-                 }
-            } else if (currentPage === 'page-chat') {
-                if(solbotButton) {
-                    solbotButton.classList.add('text-shinhan-blue', 'font-semibold');
-                    solbotButton.classList.remove('text-gray-500');
-                }
             }
         }
         
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const target = document.getElementById(pageId);
-            const bottomNav = document.getElementById('bottom-navigation');
-
+            
             if (target) {
                 target.classList.add('active');
-                currentPage = pageId; // Update currentPage immediately
-
-                if (pageId === 'page-main' || pageId === 'page-chat') {
-                    if(bottomNav) bottomNav.style.display = 'flex';
-                    target.style.position = 'relative'; // Ensure it's part of the flow
-                    target.style.height = 'calc(100vh - 4rem)'; // Space for bottom nav
-                    target.scrollTop = 0; // Scroll to top for these pages
-                } else { // Overlay pages like cover, search-results, transfer
-                    if(bottomNav) bottomNav.style.display = 'none';
-                    target.style.position = 'absolute';
-                    target.style.top = '0';
-                    target.style.left = '0';
-                    target.style.height = '100vh'; // Full height for overlays
-                    target.style.zIndex = '20'; 
-                }
-                updateActiveNavButton(); // Update nav button based on the new currentPage
-
+                currentPage = pageId; 
 
                 if (pageId === 'page-transfer') {
-                    startTransferChat(); 
+                    if(initialTransferData) {
+                        presentOneStepTransfer(initialTransferData);
+                        initialTransferData = null;
+                    } else {
+                        startTransferChat(); 
+                    }
                 } else if (pageId === 'page-chat') {
                     initializeSolbotChat();
-                } else if (['page-search-results'].includes(pageId)) {
-                     target.querySelector('.overflow-y-auto')?.scrollTo(0,0);
+                } else if (pageId === 'page-balance') {
+                    renderBalanceList();
                 }
             }
         }
         
         function initializeSolbotChat() {
             const chatMessagesArea = document.getElementById('chat-messages');
-            // Clear previous messages except for a new welcome message if it's a fresh load
+            const chatInput = document.getElementById('chat-input');
             if (chatMessagesArea) {
-                 chatMessagesArea.innerHTML = ''; // Clear old messages
-                 addMessageToChat("AI", "안녕하세요! 저는 SUPER SOL의 AI 비서 SOL봇입니다. 무엇을 도와드릴까요?", 'chat-messages', 'chat-bubble-bot');
+                 chatMessagesArea.innerHTML = ''; 
+                 addMessageToChat("AI", "안녕하세요! 저는 신한은행 AI 비서 SOL봇입니다. 무엇이든 물어보세요.", 'chat-messages', 'chat-bubble-bot');
             }
-
+            if(chatInput) {
+                chatInput.disabled = false;
+                chatInput.focus();
+            }
             if (initialSolbotQuery) {
-                sendChatMessage(initialSolbotQuery, false, true); // Send initial query if present
-                initialSolbotQuery = null; // Clear after use
+                sendChatMessage(initialSolbotQuery, false, true); 
+                initialSolbotQuery = null; 
             }
         }
+        
+        function renderBalanceList() {
+            const container = document.getElementById('balance-list-container');
+            if (!container) return;
+            container.innerHTML = ''; // Clear previous list
 
+            let totalBalance = 0;
+            availableAccounts.forEach(acc => {
+                totalBalance += acc.balance;
+                const accountCard = `
+                    <div class="bg-white p-4 rounded-xl shadow mb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="font-semibold text-shinhan-dark-gray">${escapeHTML(acc.name)}</div>
+                            <div class="text-xs text-gray-500">${escapeHTML(acc.number)}</div>
+                        </div>
+                        <div class="text-right text-2xl font-bold text-shinhan-dark-gray">${acc.balance.toLocaleString()} 원</div>
+                    </div>
+                `;
+                container.innerHTML += accountCard;
+            });
 
-        function handleCoverSearch(event, isVoice = false, isSearchIcon = false) {
-            const input = document.getElementById('cover-search-input');
-            const query = input ? input.value.trim().toLowerCase() : "";
+            const totalBalanceCard = `
+                <div class="bg-shinhan-blue text-white p-5 rounded-xl shadow-lg mb-6">
+                    <div class="text-sm opacity-80">총 잔액</div>
+                    <div class="text-3xl font-bold mt-1">${totalBalance.toLocaleString()} 원</div>
+                </div>
+            `;
+            container.innerHTML = totalBalanceCard + container.innerHTML;
+        }
+
+        function parseTransferQuery(query) {
+            const pattern = /(.+?)(에게)?\s*([\d,]+)만?\s*원\s*(보내줘|송금|이체)/;
+            let match = query.match(pattern);
+            
+            if (match) {
+                let recipient = match[1].trim();
+                let amountStr = match[3].replace(/,/g, '');
+                let amount = parseFloat(amountStr);
+
+                if (query.includes('만원') && !query.includes('만 원')) {
+                    amount *= 10000;
+                }
+                
+                if (recipient && amount) {
+                    return { recipient, amount };
+                }
+            }
+            return null;
+        }
+
+        function handleSearch(event, inputId, isSearchIcon = false) {
+            const input = document.getElementById(inputId);
+            const query = input ? input.value.trim() : "";
             let executeAction = false;
 
-            if (event && event.key === 'Enter' && query) executeAction = true;
-            else if (isSearchIcon && query) executeAction = true;
-            else if (isVoice && query) executeAction = true; 
-            else if (isVoice && !query) { 
-                 showToast("음성으로 말씀해주세요. 예: 'OOO에게 송금'");
-                 return;
+            if ((event && event.key === 'Enter' && query) || (isSearchIcon && query)) {
+                executeAction = true;
             } else if ((event && event.key === 'Enter' && !query) || (isSearchIcon && !query)) {
-                 showToast("검색어를 입력해주세요.");
-                 return;
+                showToast("검색어를 입력해주세요.");
+                return;
             }
-            
-            if (executeAction) {
-                previousPageForTransfer = 'page-cover'; 
-                if (query.includes("송금") || query.includes("보내줘") || query.includes("이체")) {
-                    showToast(`'${escapeHTML(query)}' 요청 확인. 송금 서비스로 연결합니다.`);
-                    setTimeout(() => { showPage('page-transfer'); if(input) input.value = ""; }, 500);
+
+            if(executeAction) {
+                const parsedData = parseTransferQuery(query);
+                if (parsedData) {
+                    showToast(`'${escapeHTML(query)}' 요청 확인. 송금 확인 화면으로 바로 이동합니다.`);
+                    previousPageForTransfer = currentPage;
+                    initialTransferData = parsedData;
+                    setTimeout(() => { showPage('page-transfer'); if(input) input.value = ""; }, 300);
                 } else {
                     showToast(`'${escapeHTML(query)}'에 대해 SOL봇에게 물어볼게요.`);
                     initialSolbotQuery = query;
-                    setTimeout(() => { showPage('page-chat'); if(input) input.value = ""; }, 500);
-                }
-            }
-        }
-
-        function handleMainSearch(event, isVoice = false, isSearchIcon = false) {
-            const input = document.getElementById('main-search-input');
-            const query = input ? input.value.trim().toLowerCase() : "";
-            let performAction = false;
-
-            if (isVoice && query) performAction = true;
-            else if (isVoice && !query) {
-                showToast("음성으로 '송금' 또는 검색어를 말씀해주세요. SOL봇에게 직접 물어보세요!");
-                // For voice without query, directly go to SOLbot page maybe? Or keep current page.
-                // For now, just a toast. Could also call showPage('page-chat');
-                return;
-            }
-            else if (event && event.key === 'Enter' && query) performAction = true;
-            else if (isSearchIcon && query) performAction = true;
-            else if (((event && event.key === 'Enter') || isSearchIcon) && !query) {
-                 showToast("검색어를 입력해주세요.");
-                 return;
-            }
-
-            if (performAction) {
-                previousPageForTransfer = 'page-main'; // Set context for transfer page
-                if (query.includes("송금") || query.includes("보내줘") || query.includes("이체")) {
-                    showToast(`'${escapeHTML(query)}' 요청 확인. 송금 화면으로 이동합니다.`);
-                    setTimeout(() => {
-                        showPage('page-transfer');
-                        if(input) input.value = "";
-                    }, 500);
-                } else if (query) { 
-                    showToast(`'${escapeHTML(query)}'에 대해 SOL봇에게 물어볼게요.`);
-                    initialSolbotQuery = query; // Pass query to SOLbot page
-                    setTimeout(() => { 
-                        showPage('page-chat');
-                        if(input) input.value = "";
-                    }, 500); 
+                    setTimeout(() => { showPage('page-chat'); if(input) input.value = ""; }, 300);
                 }
             }
         }
         
         async function getFinancialTip() {
             showToast("✨ AI가 오늘의 금융 팁을 생성 중입니다...");
-            const prompt = "일반적인 사용자를 위한 짧고 실용적인 금융 팁 하나만 한국어로 알려줘. 이모지를 사용해서 친근하게 표현해줘.";
+            const prompt = "20대 사회초년생을 위한 실용적인 금융 팁 하나를 알려줘.";
             const tip = await callGeminiAPI(prompt);
-            if (tip) { 
-                showToast(marked.parse(tip), 5000); 
-            } else { 
-                showToast("금융 팁을 가져오는데 알 수 없는 문제가 발생했어요. 😥");
-            }
+            showToast(marked.parse(tip), 5000); 
         }
 
-        function goToTransferFromMainUI() {
+        function goToTransferFromMainUI() { 
             previousPageForTransfer = 'page-main';
-            showPage('page-transfer');
+            initialTransferData = null; // Ensure step-by-step
+            showPage('page-transfer'); 
         }
-        
-        function handleChatInput(event) { 
-            if (event.key === 'Enter') {
-                sendChatMessage(document.getElementById('chat-input').value, false);
-            }
+
+        function goToSolBotWithQuery(query) {
+            initialSolbotQuery = query;
+            showPage('page-chat');
         }
+
+        function handleChatInput(event) { if (event.key === 'Enter') { sendChatMessage(document.getElementById('chat-input').value, false); } }
         
-        async function sendChatMessage(message, isVoice = false, isInitialQuery = false) { 
-            const chatInput = document.getElementById('chat-input'); // Assuming this is for SOLbot chat page
+        async function sendChatMessage(message, isInitialQuery = false) { 
+            const chatInput = document.getElementById('chat-input'); 
             const messageText = (typeof message === 'string' ? message.trim() : (chatInput ? chatInput.value.trim() : ""));
             let userPrompt = messageText;
-
-            if (isVoice && !messageText && !isInitialQuery) {
-                userPrompt = "음성으로 질문합니다: (사용자가 말하는 중...)"; 
-                showToast("음성 인식을 시작합니다..."); 
-            }
-            if (!userPrompt && !isInitialQuery) { // Allow empty initial query if page loaded with it
-                 showToast("메시지를 입력해주세요.");
+            
+            if (!userPrompt) {
+                 if(!isInitialQuery) showToast("메시지를 입력해주세요.");
                 return;
             }
             
-            if (userPrompt) { // Only add user message if there is a prompt
-                addMessageToChat("user", userPrompt, 'chat-messages', 'chat-bubble-user');
+            const lowerUserPrompt = userPrompt.toLowerCase();
+            const balanceKeywords = ["잔액", "잔고", "통장 보여줘", "얼마 있어", "돈 얼마남았어", "돈 얼마나있어"];
+            
+            if (balanceKeywords.some(kw => lowerUserPrompt.includes(kw))) {
+                 addMessageToChat("user", userPrompt, 'chat-messages', 'chat-bubble-user');
+                 setTimeout(() => {
+                    addMessageToChat("AI", "네, 계좌 잔액을 조회해 드릴게요. 잠시만 기다려주세요.", 'chat-messages', 'chat-bubble-bot');
+                 }, 300);
+                 setTimeout(() => {
+                    showPage('page-balance');
+                 }, 1200);
+                 if(chatInput) chatInput.value = '';
+                 return;
             }
-            if(chatInput && !isInitialQuery) chatInput.value = ''; // Don't clear if it's an initial query that auto-sent
+            
+            if (lowerUserPrompt.includes("송금") || lowerUserPrompt.includes("보내줘") || lowerUserPrompt.includes("이체")) {
+                 const parsedData = parseTransferQuery(userPrompt);
+                 addMessageToChat("user", userPrompt, 'chat-messages', 'chat-bubble-user');
+                 setTimeout(() => {
+                    addMessageToChat("AI", "네, 송금하시려는군요. 송금 화면으로 안내해 드릴게요.", 'chat-messages', 'chat-bubble-bot');
+                 }, 300);
+                 setTimeout(() => {
+                    previousPageForTransfer = 'page-chat';
+                    initialTransferData = parsedData;
+                    showPage('page-transfer');
+                 }, 1200);
+                 if(chatInput) chatInput.value = '';
+                 return;
+            }
 
-            // Use the original userPrompt (which might be from initialSolbotQuery)
-            const aiResponseText = await callGeminiAPI(userPrompt || "안녕하세요.", true); // Send "안녕하세요" if prompt is empty after all
+            addMessageToChat("user", userPrompt, 'chat-messages', 'chat-bubble-user');
+            if(chatInput) chatInput.value = '';
+            if(chatInput) chatInput.disabled = true;
+
+            const aiResponseText = await callGeminiAPI(userPrompt); 
             addMessageToChat("AI", aiResponseText, 'chat-messages', 'chat-bubble-bot');
+
+            if(chatInput) {
+                chatInput.disabled = false;
+                chatInput.focus();
+            }
         }
 
         function addMessageToChat(sender, text, messageAreaId, bubbleClass) {
@@ -586,224 +577,237 @@
             const bubbleDiv = document.createElement('div');
             bubbleDiv.className = `p-3 rounded-lg shadow chat-bubble ${bubbleClass}`;
             
-            if (sender === 'AI' && typeof marked !== 'undefined' && text) {
-                bubbleDiv.innerHTML = marked.parse(text); 
-            } else if (text) {
-                bubbleDiv.textContent = text; 
-            } else {
-                bubbleDiv.textContent = ""; 
-            }
+            if (sender === 'AI' && typeof marked !== 'undefined' && text) { bubbleDiv.innerHTML = marked.parse(text); } 
+            else if (text) { bubbleDiv.innerHTML = text; } // Allow HTML from system messages
+            else { bubbleDiv.textContent = ""; }
             
             messageDiv.appendChild(bubbleDiv);
             messagesArea.appendChild(messageDiv);
-            // Ensure the parent container (#chat-messages-container) is scrolled, not just the inner div
-            const container = document.getElementById('chat-messages-container');
-            if(container) container.scrollTop = container.scrollHeight;
-            else messagesArea.scrollTop = messagesArea.scrollHeight;
+            const container = messagesArea.parentElement;
+            container.scrollTop = container.scrollHeight;
         }
         
-        function startTransferChat() {
+        // --- Transfer Chat Functions ---
+        function presentOneStepTransfer(data) {
+            const chatArea = document.getElementById('transfer-chat-messages');
+            if (chatArea) chatArea.innerHTML = '';
+            document.getElementById('transfer-summary-display').style.display = 'none';
+            document.getElementById('transfer-input-area').style.display = 'block';
+            document.getElementById('transfer-chat-input').disabled = true;
+            
+            transferData = { ...transferData, ...data }; 
+            currentTransferStep = 'confirm';
+            const confirmMsg = `<strong>${escapeHTML(transferData.recipient)}</strong>님에게 <strong>${escapeHTML(transferData.amount.toLocaleString())}원</strong>을 이체할까요?`;
+            addMessageToChat('bot', confirmMsg, 'transfer-chat-messages', 'chat-bubble-bot');
+            showConfirmationQuickReplies('transfer-quick-reply-area', '✅ 송금 실행', '❌ 취소', processTransferStep, true); // show account selector
+        }
+
+        function startTransferChat(isReset = false){
+            if(isReset) {
+                showToast("새로운 송금을 시작합니다.");
+            }
             document.getElementById('transfer-chat-messages').innerHTML = ''; 
             document.getElementById('transfer-summary-display').style.display = 'none'; 
             document.getElementById('transfer-input-area').style.display = 'block'; 
             document.getElementById('transfer-chat-input').disabled = false;
-
-            transferData = { recipient: '', amount: '', account: '' }; 
+            transferData = { recipient: '', amount: '', account: availableAccounts[0].name }; 
             currentTransferStep = 'recipient';
             addMessageToChat('bot', '누구에게 보내시겠습니까? 계좌번호나 이름을 입력해주세요.', 'transfer-chat-messages', 'chat-bubble-bot');
-            clearQuickReplies();
-            document.getElementById('transfer-chat-input').placeholder = '받는 분 입력...';
+            clearQuickReplies('transfer-quick-reply-area'); 
+            document.getElementById('transfer-chat-input').placeholder = '받는 분 입력...'; 
             document.getElementById('transfer-chat-input').type = 'text';
         }
-
-        function handleTransferChatInput(isSendButton = false, quickReplyValue = null) {
+        function handleTransferChatInput(isSendButton = false, quickReplyValue = null){
             const input = document.getElementById('transfer-chat-input');
             const userText = quickReplyValue !== null ? quickReplyValue : (input ? input.value.trim() : "");
-
-            if (!userText) {
-                showToast("답변을 입력해주세요.");
-                return;
-            }
-            
+            if (!userText) { showToast("답변을 입력해주세요."); return; }
             addMessageToChat('user', userText, 'transfer-chat-messages', 'chat-bubble-user');
-            if(input) input.value = ''; 
-            clearQuickReplies(); 
-
-            setTimeout(() => { 
-                processTransferStep(userText);
-            }, 300);
+            if(input) input.value = '';
+            clearQuickReplies('transfer-quick-reply-area'); 
+            setTimeout(() => processTransferStep(userText), 300);
         }
-
-        function processTransferStep(userData) {
-            switch(currentTransferStep) {
+        function processTransferStep(userData){
+             switch(currentTransferStep) {
                 case 'recipient':
-                    transferData.recipient = userData;
-                    currentTransferStep = 'amount';
-                    addMessageToChat('bot', `네, ${escapeHTML(transferData.recipient)}님에게 보내시는군요. 얼마를 보내시겠습니까? (숫자만 입력)`, 'transfer-chat-messages', 'chat-bubble-bot');
-                    document.getElementById('transfer-chat-input').type = 'number'; 
-                    document.getElementById('transfer-chat-input').placeholder = '금액(숫자) 입력...';
+                    transferData.recipient = userData; currentTransferStep = 'amount';
+                    addMessageToChat('bot', `네, ${escapeHTML(transferData.recipient)}님에게 보내시는군요. 얼마를 보내시겠습니까?`, 'transfer-chat-messages', 'chat-bubble-bot');
+                    document.getElementById('transfer-chat-input').type = 'number'; document.getElementById('transfer-chat-input').placeholder = '금액(숫자) 입력...';
                     break;
                 case 'amount':
                     if (!isNaN(parseFloat(userData)) && isFinite(userData) && parseFloat(userData) > 0) {
-                        transferData.amount = parseFloat(userData);
-                        currentTransferStep = 'account';
-                        addMessageToChat('bot', `${escapeHTML(transferData.amount.toLocaleString())}원을 보내시는군요. 어떤 계좌에서 출금할까요? 아래에서 선택하거나 직접 입력해주세요.`, 'transfer-chat-messages', 'chat-bubble-bot');
-                        document.getElementById('transfer-chat-input').type = 'text';
-                        document.getElementById('transfer-chat-input').placeholder = '계좌 별칭 또는 선택...';
+                        transferData.amount = parseFloat(userData); currentTransferStep = 'account';
+                        addMessageToChat('bot', `${escapeHTML(transferData.amount.toLocaleString())}원을 보내시는군요. 어떤 계좌에서 출금할까요?`, 'transfer-chat-messages', 'chat-bubble-bot');
+                        document.getElementById('transfer-chat-input').type = 'text'; document.getElementById('transfer-chat-input').placeholder = '계좌 별칭 또는 선택...';
                         showAccountQuickReplies();
-                    } else {
-                         addMessageToChat('bot', '금액은 0보다 큰 숫자로 정확히 입력해주세요. 얼마를 보내시겠습니까?', 'transfer-chat-messages', 'chat-bubble-bot');
-                         document.getElementById('transfer-chat-input').type = 'number';
-                    }
+                    } else { addMessageToChat('bot', '금액은 0보다 큰 숫자로 정확히 입력해주세요.', 'transfer-chat-messages', 'chat-bubble-bot'); }
                     break;
                 case 'account':
-                    transferData.account = userData; 
-                    currentTransferStep = 'confirm';
-                    const confirmMsg = `알겠습니다! ${escapeHTML(transferData.recipient)}님에게 ${escapeHTML(transferData.amount.toLocaleString())}원을 ${escapeHTML(transferData.account)} 계좌에서 송금할까요?`;
+                    transferData.account = userData; currentTransferStep = 'confirm';
+                    const confirmMsg = `알겠습니다! <strong>${escapeHTML(transferData.recipient)}</strong>님에게 <strong>${escapeHTML(transferData.amount.toLocaleString())}원</strong>을 이체할까요?`;
                     addMessageToChat('bot', confirmMsg, 'transfer-chat-messages', 'chat-bubble-bot');
-                    showConfirmationQuickReplies();
+                    showConfirmationQuickReplies('transfer-quick-reply-area', '✅ 송금 실행', '❌ 취소', processTransferStep, true); // show account selector
                     document.getElementById('transfer-chat-input').disabled = true; 
                     break;
                 case 'confirm': 
-                    if (userData.toLowerCase() === '송금 실행') {
-                        executeTransferViaChat();
-                    } else {
-                        addMessageToChat('bot', '송금이 취소되었습니다. 처음부터 다시 시작하시려면 뒤로가기를 눌러주세요.', 'transfer-chat-messages', 'chat-bubble-bot');
-                        clearQuickReplies(); 
-                    }
+                    if (userData.toLowerCase().includes('실행')) executeTransferViaChat();
+                    else { addMessageToChat('bot', '송금이 취소되었습니다.', 'transfer-chat-messages', 'chat-bubble-bot'); setTimeout(cancelTransferAndGoBack, 1500); }
                     break;
             }
         }
-
-        function showAccountQuickReplies() {
+        function showAccountQuickReplies(){
             const area = document.getElementById('transfer-quick-reply-area');
             area.innerHTML = ''; 
             availableAccounts.forEach(acc => {
-                const button = document.createElement('button');
-                button.className = 'quick-reply-button';
-                button.textContent = acc.name;
-                button.onclick = () => handleTransferChatInput(false, acc.name); 
+                const button = document.createElement('button'); button.className = 'quick-reply-button';
+                button.textContent = acc.name; button.onclick = () => handleTransferChatInput(false, acc.name); 
                 area.appendChild(button);
             });
         }
-        
-        function showConfirmationQuickReplies() {
-            const area = document.getElementById('transfer-quick-reply-area');
+        function showConfirmationQuickReplies(areaId, confirmText, cancelText, callback, showAccountSelect = false){
+            const area = document.getElementById(areaId);
             area.innerHTML = '';
+
+            if(showAccountSelect) {
+                const label = document.createElement('label');
+                label.className = 'block text-sm font-medium text-gray-700 mb-1';
+                label.textContent = '출금 계좌 선택:';
+                area.appendChild(label);
+
+                const selectEl = document.createElement('select');
+                selectEl.id = 'bottom-account-select';
+                selectEl.innerHTML = availableAccounts.map(acc => `<option value="${acc.name}" ${acc.name === transferData.account ? 'selected' : ''}>${acc.name} (잔액: ${acc.balance.toLocaleString()}원)</option>`).join('');
+                area.appendChild(selectEl);
+            }
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'flex justify-center items-center w-full space-x-2 mt-2';
+            
             const confirmButton = document.createElement('button');
             confirmButton.className = 'quick-reply-button bg-shinhan-blue text-white';
-            confirmButton.textContent = '✅ 송금 실행';
-            confirmButton.onclick = () => { 
-                clearQuickReplies(); 
-                processTransferStep('송금 실행'); 
-            };
-            area.appendChild(confirmButton);
+            confirmButton.textContent = confirmText;
+            confirmButton.onclick = () => { clearQuickReplies(areaId); callback(confirmText); };
+            buttonContainer.appendChild(confirmButton);
 
             const cancelButton = document.createElement('button');
             cancelButton.className = 'quick-reply-button bg-gray-400 text-white';
-            cancelButton.textContent = '❌ 취소';
-            cancelButton.onclick = () => { 
-                clearQuickReplies(); 
-                processTransferStep('취소'); 
-            };
-            area.appendChild(cancelButton);
+            cancelButton.textContent = cancelText;
+            cancelButton.onclick = () => { clearQuickReplies(areaId); callback(cancelText); };
+            buttonContainer.appendChild(cancelButton);
+
+            area.appendChild(buttonContainer);
         }
 
-        function clearQuickReplies() {
-            const area = document.getElementById('transfer-quick-reply-area');
+        function clearQuickReplies(areaId) {
+            const area = document.getElementById(areaId);
             if(area) area.innerHTML = '';
         }
-        
-        async function executeTransferViaChat() {
-            addMessageToChat('bot', `${escapeHTML(transferData.recipient)}님에게 ${escapeHTML(transferData.amount.toLocaleString())}원 송금을 요청합니다... (성공!)`, 'transfer-chat-messages', 'chat-bubble-bot');
-            
-            document.getElementById('transfer-input-area').style.display = 'none'; 
-            document.getElementById('transfer-summary-display').style.display = 'block'; 
-            const summaryDiv = document.getElementById('ai-transfer-summary-text');
-            
-            let structuredSummaryHtml = `
-                <p><strong>받는사람 :</strong> ${escapeHTML(transferData.recipient)}</p>
-                <p><strong>금액 :</strong> ${escapeHTML(transferData.amount.toLocaleString())} 원</p>
-                <p><strong>출금통장 :</strong> ${escapeHTML(transferData.account)}</p>
-                <br>
-                <p>이체되었습니다.</p>
-                <hr class="my-2 border-gray-300">
-                <div id="gemini-friendly-summary-placeholder" class="mt-1">
-                    <div class="loader_small inline-block border-2 border-gray-200 border-top-2 border-shinhan-blue rounded-full w-4 h-4 animate-spin mr-1"></div> AI 친절 요약 생성 중...
-                </div>
-            `;
-            summaryDiv.innerHTML = structuredSummaryHtml;
-
-            const prompt = `"${transferData.recipient}"에게 ${transferData.amount}원 (${transferData.account} 계좌에서) 이체가 방금 완료된 상황에 대해, 받는 사람에게 전달할 짧고 친근한 한 문장 메시지를 한국어로 작성해줘 (이모지 1개 사용 가능). 예를 들어 "OO님께 X,XXX원 송금 완료! 즐거운 하루 보내세요! 😊" 와 같이 작성해줘.`;
-            const friendlySummaryText = await callGeminiAPI(prompt, false); 
-            
-            const geminiPlaceholder = document.getElementById('gemini-friendly-summary-placeholder');
-            if (geminiPlaceholder) {
-                if (friendlySummaryText && typeof marked !== 'undefined') {
-                    geminiPlaceholder.innerHTML = `<strong>AI 코멘트:</strong> ${marked.parse(friendlySummaryText)}`;
-                } else if (friendlySummaryText) { 
-                     geminiPlaceholder.innerHTML = `<strong>AI 코멘트:</strong> ${escapeHTML(friendlySummaryText)}`;
-                }
-                else {
-                    geminiPlaceholder.innerHTML = `<strong>AI 코멘트:</strong> 이체내역 요약 코멘트를 가져올 수 없습니다. 😥`;
-                }
+        async function executeTransferViaChat(){
+            const finalAccountSelect = document.getElementById('bottom-account-select');
+            if (finalAccountSelect) {
+                transferData.account = finalAccountSelect.value;
             }
-        }
+            
+            const selectedAccount = availableAccounts.find(acc => acc.name === transferData.account);
+            if(!selectedAccount || selectedAccount.balance < transferData.amount) {
+                addMessageToChat('bot', '선택하신 계좌의 잔액이 부족합니다. 다른 계좌를 선택해주세요.', 'transfer-chat-messages', 'chat-bubble-bot');
+                showConfirmationQuickReplies('transfer-quick-reply-area', '✅ 송금 실행', '❌ 취소', processTransferStep, true);
+                return;
+            }
 
-        function resetAndGoBackFromTransfer() { 
-            document.getElementById('transfer-summary-display').style.display = 'none';
-            showPage(previousPageForTransfer || 'page-main'); 
+            document.getElementById('transfer-input-area').style.display = 'none'; 
+            
+            const newBalance = selectedAccount.balance - transferData.amount;
+            
+            addMessageToChat('bot', '이체가 완료되었습니다.', 'transfer-chat-messages', 'chat-bubble-bot');
+            setTimeout(() => { 
+                document.getElementById('transfer-summary-display').style.display = 'block'; 
+                const summaryDiv = document.getElementById('ai-transfer-summary-text');
+                let structuredSummaryHtml = `
+                    <p><strong>받는사람 :</strong> ${escapeHTML(transferData.recipient)}</p>
+                    <p><strong>금액 :</strong> ${escapeHTML(transferData.amount.toLocaleString())} 원</p>
+                    <p><strong>출금통장 :</strong> ${escapeHTML(transferData.account)}</p>
+                    <hr class="my-2 border-gray-300">
+                    <p><strong>출금 후 잔액 :</strong> ${escapeHTML(newBalance.toLocaleString())} 원</p>`;
+                summaryDiv.innerHTML = structuredSummaryHtml;
+                selectedAccount.balance = newBalance;
+            }, 500);
         }
-         function cancelTransferAndGoBack() { 
-            showToast("송금이 취소되었습니다.");
-            transferData = { recipient: '', amount: '', account: '' };
-            currentTransferStep = '';
-            document.getElementById('transfer-chat-messages').innerHTML = '';
-            clearQuickReplies();
-            showPage(previousPageForTransfer || 'page-main'); 
+        function goToSolBotFromTransfer(){
+            initialSolbotQuery = `${transferData.recipient}님에게 송금한 내역을 다시 확인하고 싶어요.`;
+            showPage('page-chat');
         }
+        function cancelTransferAndGoBack(){ showToast("송금이 취소되었습니다."); showPage(previousPageForTransfer || 'page-main');}
 
         function escapeHTML(str) {
             if (typeof str !== 'string') return '';
             return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[match]));
         }
-
         let toastTimeout;
         function showToast(message, duration = 2500) {
             const toast = document.getElementById('toast-message');
             if (!toast) return;
-            if (typeof message === 'string' && (message.includes('<') || message.includes('&'))) { 
-                 toast.innerHTML = message; 
-            } else {
-                 toast.textContent = message;
-            }
+            if (typeof message === 'string' && (message.includes('<') || message.includes('&'))) toast.innerHTML = message; 
+            else toast.textContent = message;
             toast.style.opacity = '1';
             clearTimeout(toastTimeout);
             toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, duration);
         }
         
-        document.addEventListener('DOMContentLoaded', () => {
-            const initialResultsContent = document.getElementById('search-results-content');
-             if (initialResultsContent && initialResultsContent.innerHTML.trim() === "") {
-                 initialResultsContent.innerHTML = `
-                    <div onclick="showServiceDetail('추천 검색 결과 예시 1')" class="bg-shinhan-gray p-4 rounded-lg shadow flex justify-between items-center cursor-pointer hover:bg-gray-200 transition-all">
-                        <span class="text-shinhan-dark-gray">추천 검색 결과 예시 1</span><i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                     <div onclick="goToTransferFromSearchResults('추천 검색')" class="bg-shinhan-gray p-4 rounded-lg shadow flex justify-between items-center cursor-pointer hover:bg-gray-200 transition-all">
-                        <span class="text-shinhan-dark-gray">추천 검색 후 송금하기</span><i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>`;
+        // --- Speech Recognition ---
+        function startSpeechRecognition(inputId) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showToast("죄송하지만, 사용하시는 브라우저에서는 음성 인식을 지원하지 않습니다.");
+                return;
             }
-            showPage('page-cover'); 
             
-            const transferChatInput = document.getElementById('transfer-chat-input');
-            if (transferChatInput) {
-                transferChatInput.addEventListener('keypress', function(event) {
-                    if (event.key === 'Enter') {
-                        handleTransferChatInput(true);
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                showToast("🎤 듣고 있어요... 말씀해주세요.");
+            };
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                const targetInput = document.getElementById(inputId);
+                if (targetInput) {
+                    targetInput.value = speechResult;
+                    showToast(`인식된 내용: "${speechResult}"`);
+                    // Automatically trigger action based on inputId
+                    if (inputId === 'chat-input') {
+                        setTimeout(() => sendChatMessage(speechResult), 300);
+                    } else {
+                        setTimeout(() => handleSearch(null, inputId, true), 500);
                     }
-                });
-            }
-            updateActiveNavButton(); // Update nav based on initial page (cover will hide it)
+                }
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+            };
+
+            recognition.onerror = (event) => {
+                if (event.error == 'no-speech') {
+                    showToast("음성을 인식하지 못했어요. 다시 시도해주세요.");
+                } else if (event.error == 'audio-capture') {
+                    showToast("마이크를 찾을 수 없어요. 마이크 설정을 확인해주세요.");
+                } else if (event.error == 'not-allowed') {
+                    showToast("마이크 사용 권한이 필요해요. 브라우저 설정을 확인해주세요.");
+                } else {
+                    showToast("음성 인식 중 오류가 발생했습니다.");
+                    console.error("Speech recognition error:", event.error);
+                }
+            };
+            
+            recognition.start();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('page-cover'); 
+            document.getElementById('transfer-chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') handleTransferChatInput(true); });
         });
     </script>
 </body>
