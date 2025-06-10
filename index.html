@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cache-Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <title>SUPER SOL - 프로토타입</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS Custom Config -->
@@ -29,7 +34,7 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             overscroll-behavior-y: contain; 
-            overflow-x: hidden;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
         .page {
             display: none;
@@ -73,6 +78,12 @@
         .chat-bubble-bot {
             background-color: #E6F2FF; 
             color: #2E3A59; 
+        }
+        .chat-bubble-bot p {
+            margin-bottom: 0.75rem; /* Add space between paragraphs */
+        }
+        .chat-bubble-bot p:last-child {
+            margin-bottom: 0;
         }
         .chat-bubble-bot table {
             width: 100%;
@@ -339,7 +350,7 @@
             account: availableAccounts[0].name, 
         };
 
-        const SHINHAN_BOT_PERSONA = "당신은 신한은행의 AI 금융 비서 'SOL봇'입니다. 모든 답변은 신한은행의 입장에서 금융과 관련된 내용으로, 친절하고 전문적으로 답변해야 합니다. ";
+        const SHINHAN_BOT_PERSONA = "당신은 신한은행의 AI 금융 비서 'SOL봇'입니다. 당신의 목표는 고객의 질문에 직접 답변하여 문제를 한 번에 해결하는 것입니다. **절대로 '앱에서 확인하세요'와 같이 사용자를 다른 곳으로 보내지 마세요.** 답변은 다음 원칙을 반드시 지켜주세요: 1. **질문 최소화:** 고객의 질문에 답변하기 위한 정보가 부족할 경우, **최대 1번 추가 질문 으로로** 주어진 정보만으로 최선의 답변을 제공하세요. 만약 질문이 꼭 필요하다면 **단 한 번만** 되물을 수 있습니다. 2. **직접 정보 제공:** 환율, 상품 정보 등 고객의 질문에 대한 답을 **신한은행과 관련된 상품으로 직접 찾아서 명확하고 간결하게** 알려주세요. 3. **가독성 높은 답변:** 문단이 끝날 때마다 **줄바꿈을 한한 번** 하여 문단 사이에 공백을 만들어주세요. 내용이 바뀌는 경우에는 줄바꿈을 2번하여 공백을 만들어주세요. 4. **스타일 가이드:** 친근하고 공감하는 말투를 사용하고, 문장은 짧게 쓰고, **볼드체**는 핵심 단어에만 사용합니다. 이모지는 답변 당 최대 2개만 자연스럽게 사용합니다. 😉";
 
         async function callGeminiAPI(prompt) {
             const loadingIndicator = document.getElementById('loading-indicator');
@@ -356,8 +367,14 @@
                     body: JSON.stringify(payload)
                 });
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Gemini API Error:", errorData);
+                    let errorText;
+                    try {
+                        const errorData = await response.json();
+                        errorText = errorData?.error?.message || JSON.stringify(errorData);
+                    } catch (e) {
+                        errorText = await response.text();
+                    }
+                    console.error("Gemini API Error:", errorText);
                     return "죄송해요, 지금은 답변을 드리기 어렵네요.";
                 }
                 const result = await response.json();
@@ -408,7 +425,7 @@
             }
             if(chatInput) {
                 chatInput.disabled = false;
-                chatInput.focus();
+                setTimeout(() => chatInput.focus(), 100); // Give a slight delay for keyboard to appear
             }
             if (initialSolbotQuery) {
                 sendChatMessage(initialSolbotQuery, false, true); 
@@ -446,22 +463,43 @@
         }
 
         function parseTransferQuery(query) {
-            const pattern = /(.+?)(에게)?\s*([\d,]+)만?\s*원\s*(보내줘|송금|이체)/;
-            let match = query.match(pattern);
-            
-            if (match) {
-                let recipient = match[1].trim();
-                let amountStr = match[3].replace(/,/g, '');
-                let amount = parseFloat(amountStr);
+            let amount = 0;
+            let tempQuery = query;
 
-                if (query.includes('만원') && !query.includes('만 원')) {
-                    amount *= 10000;
-                }
-                
-                if (recipient && amount) {
-                    return { recipient, amount };
+            const unitMap = { '억': 100000000, '만': 10000, '천': 1000 };
+            for (const [unit, value] of Object.entries(unitMap)) {
+                const regex = new RegExp(`(\\d[\\d,]*)(${unit})`);
+                const match = tempQuery.match(regex);
+                if (match) {
+                    amount += parseInt(match[1].replace(/,/g, '')) * value;
+                    tempQuery = tempQuery.replace(match[0], '');
                 }
             }
+            
+            const amountMatch = tempQuery.match(/([\d,]+)\s*원?/);
+            if(amountMatch) {
+                 amount += parseInt(amountMatch[1].replace(/,/g, ''));
+                 tempQuery = tempQuery.replace(amountMatch[0], '');
+            }
+
+            if (amount === 0) return null;
+
+            const actionKeywords = ['보내줘', '송금해줘', '이체해줘', '보내', '송금', '이체'];
+            let recipientStr = tempQuery;
+            actionKeywords.forEach(kw => {
+                recipientStr = recipientStr.replace(new RegExp(kw, 'g'), '');
+            });
+            const particles = ['에게', '한테', '께'];
+            particles.forEach(p => {
+                recipientStr = recipientStr.replace(new RegExp(p, 'g'), '');
+            });
+            
+            const recipient = recipientStr.trim();
+
+            if (recipient && amount > 0) {
+                return { recipient, amount };
+            }
+
             return null;
         }
 
@@ -573,10 +611,8 @@
             const bubbleDiv = document.createElement('div');
             bubbleDiv.className = `p-3 rounded-lg shadow chat-bubble ${bubbleClass}`;
             
-            if (text.includes('<') && text.includes('>')) {
-                bubbleDiv.innerHTML = text; // Allow pre-formatted HTML
-            } else if (sender === 'AI' && typeof marked !== 'undefined' && text) { 
-                bubbleDiv.innerHTML = marked.parse(text); 
+            if (text.includes('<strong>') || (sender === 'AI' && typeof marked !== 'undefined' && text)) {
+                bubbleDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
             } else if (text) { 
                 bubbleDiv.innerHTML = escapeHTML(text).replace(/\n/g, '<br>'); 
             } else { 
@@ -735,7 +771,7 @@
             }, 500);
         }
         function goToSolBotFromTransfer(){
-            initialSolbotQuery = `${transferData.recipient}님에게 송금한 내역을 다시 확인하고 싶어요.`;
+            initialSolbotQuery = `방금 ${transferData.recipient}님에게 송금한 내역을 다시 확인하고 싶어요.`;
             showPage('page-chat');
         }
         function cancelTransferAndGoBack(){ showToast("송금이 취소되었습니다."); showPage(previousPageForTransfer || 'page-main');}
@@ -780,9 +816,9 @@
                     showToast(`인식된 내용: "${speechResult}"`);
                     // Automatically trigger action based on inputId
                     if (inputId === 'chat-input') {
-                        setTimeout(() => sendChatMessage(speechResult), 300);
+                        sendChatMessage(speechResult);
                     } else {
-                        setTimeout(() => handleSearch(null, inputId, true), 500);
+                        handleSearch(null, inputId, true);
                     }
                 }
             };
